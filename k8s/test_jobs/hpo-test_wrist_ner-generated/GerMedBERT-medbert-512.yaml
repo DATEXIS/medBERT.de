@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wrist-ner-hpo-a100-germedbert-medbert-512
+  labels:
+    app: wrist-ner-hpo-a100-germedbert-medbert-512
+spec:
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: wrist-ner-hpo-a100-germedbert-medbert-512
+    spec:
+      priorityClassName: unimportant
+      containers:
+        - name: medbert
+          image: registry.datexis.com/pgrundmann/medbert
+          command: [
+              "python", "evaluation/hpo_ner_ct.py",
+              "--num_classes", "58",
+              "--task", "wrist_ct",
+              "--test",
+              "--model_name", "GerMedBERT/medbert-512",
+              "--tmp_modelname", "GerMedBERT/medbert-512",
+              "--storage_mode", "postgresql",
+              "--save_dir", "/tmp/logs",
+              "--filename", "/pvc/radiologie-benchmarks/wrist-xray-and-ct/scaphiod-annotiert-1.jsonl"
+          ]
+          envFrom:
+            - secretRef:
+                name: huggingface-auth
+          env:
+            - name: LANG
+              value: 'C.UTF-8'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'true'
+            - name: NCCL_DEBUG
+              value: 'INFO'
+            - name: HF_DATASETS_CACHE
+              value: "/pvc/datasets_cache"
+          resources:
+            requests:
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: medbert-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+      nodeSelector:
+        gpu: a100
+      volumes:
+        - name: medbert-pvc
+          persistentVolumeClaim:
+            claimName: medbert-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

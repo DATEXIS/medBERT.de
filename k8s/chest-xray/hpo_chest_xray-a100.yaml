@@ -1,0 +1,62 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chest-xray-hpo-a100-{{jobname}}
+  labels:
+    app: chest-xray-hpo-a100-{{jobname}}
+spec:
+  parallelism: 9
+  template:
+    metadata:
+      labels:
+        app: chest-xray-hpo-a100-{{jobname}}
+    spec:
+      priorityClassName: unimportant
+      containers:
+        - name: medbert
+          image: registry.datexis.com/pgrundmann/medbert
+          command: [
+              "python", "evaluation/hpo_radiology_classification.py",
+              "--num_classes", "9",
+              "--save_dir", "/tmp/chest-xray-hpo",
+              "--model_name", "{{modelname}}",
+              "--task", "chest_xray",
+              "--storage_mode", "postgresql",
+              "--train_filename=/pvc/radiologie-benchmarks/chest-xray/train.csv",
+              "--test_filename=/pvc/radiologie-benchmarks/chest-xray/test.csv",
+              "--val_filename=/pvc/radiologie-benchmarks/chest-xray/valid.csv"
+          ]
+          envFrom:
+            - secretRef:
+                name: huggingface-auth
+          env:
+            - name: LANG
+              value: 'C.UTF-8'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'true'
+            - name: NCCL_DEBUG
+              value: 'INFO'
+            - name: TRANSFORMERS_CACHE
+              value: "/pvc/huggingface_cache"
+          resources:
+            requests:
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: medbert-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+      nodeSelector:
+        gpu: a100
+      volumes:
+        - name: medbert-pvc
+          persistentVolumeClaim:
+            claimName: medbert-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

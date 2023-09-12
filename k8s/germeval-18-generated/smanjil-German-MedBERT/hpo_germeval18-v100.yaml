@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: germeval18-hpo-v100-smanjil-german-medbert
+  labels:
+    app: germeval18-hpo-v100-smanjil-german-medbert
+spec:
+  parallelism: 9
+  template:
+    metadata:
+      labels:
+        app: germeval18-hpo-v100-smanjil-german-medbert
+    spec:
+      priorityClassName: unimportant
+      containers:
+        - name: medbert
+          image: registry.datexis.com/pgrundmann/medbert
+          command: [
+              "python", "evaluation/hpo_radiology_classification.py",
+              "--num_classes", "2",
+              "--save_dir", "/tmp/germeval18-hpo",
+              "--model_name", "smanjil/German-MedBERT",
+              "--tmp_modelname", "smanjil/German-MedBERT",
+              "--task", "germeval18",
+              "--storage_mode", "postgresql"
+
+          ]
+          envFrom:
+            - secretRef:
+                name: huggingface-auth
+          env:
+            - name: LANG
+              value: 'C.UTF-8'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'true'
+            - name: NCCL_DEBUG
+              value: 'INFO'
+            - name: TRANSFORMERS_CACHE
+              value: "/pvc/huggingface_cache"
+            - name: HF_DATASETS_CACHE
+              value: "/pvc/datasets_cache"
+          resources:
+            requests:
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: medbert-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+      nodeSelector:
+        gpu: v100
+      volumes:
+        - name: medbert-pvc
+          persistentVolumeClaim:
+            claimName: medbert-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

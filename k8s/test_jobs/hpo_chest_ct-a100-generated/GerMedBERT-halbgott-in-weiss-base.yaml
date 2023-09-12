@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chest-ct-hpo-a100-germedbert-halbgott-in-weiss-base
+  labels:
+    app: chest-ct-hpo-a100-germedbert-halbgott-in-weiss-base
+spec:
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: chest-ct-hpo-a100-germedbert-halbgott-in-weiss-base
+    spec:
+      priorityClassName: unimportant
+      containers:
+        - name: medbert
+          image: registry.datexis.com/pgrundmann/medbert
+          command: [
+              "python", "evaluation/hpo_radiology_classification.py",
+              "--num_classes", "24",
+              "--save_dir", "/tmp/chest-ct-hpo",
+              "--model_name", "GerMedBERT/halbgott-in-weiss-base",
+              "--task", "chest_ct",
+              "--storage_mode", "postgresql",
+              "--test",
+              "--train_filename", "/pvc/radiologie-benchmarks/chest-ct/ct_reports.csv",
+              "--test_filename", "/pvc/radiologie-benchmarks/chest-ct/ct_reports_test.csv"
+          ]
+          envFrom:
+            - secretRef:
+                name: huggingface-auth
+          env:
+            - name: LANG
+              value: 'C.UTF-8'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'true'
+            - name: NCCL_DEBUG
+              value: 'INFO'
+          resources:
+            requests:
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: medbert-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+      nodeSelector:
+        gpu: a100
+      volumes:
+        - name: medbert-pvc
+          persistentVolumeClaim:
+            claimName: medbert-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

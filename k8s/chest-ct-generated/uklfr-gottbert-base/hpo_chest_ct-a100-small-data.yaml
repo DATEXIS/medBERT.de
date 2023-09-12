@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chest-ct-hpo-a100-uklfr-gottbert-base
+  labels:
+    app: chest-ct-hpo-a100-uklfr-gottbert-base
+spec:
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: chest-ct-hpo-a100-uklfr-gottbert-base
+    spec:
+      priorityClassName: unimportant
+      containers:
+        - name: medbert
+          image: registry.datexis.com/papaioannou/medbert:latest
+          envFrom:
+            - secretRef:
+                name: huggingface-auth
+          env:
+            - name: LANG
+              value: 'C.UTF-8'
+            - name: TOKENIZERS_PARALLELISM
+              value: 'true'
+            - name: NCCL_DEBUG
+              value: 'INFO'
+            - name: TRANSFORMERS_CACHE
+              value: "/pvc/huggingface_cache"
+          resources:
+            requests:
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: medbert-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+          command: ["/bin/sh", "-c"]
+          args:
+            - cd /pvc/medBERT/scripts;
+              python evaluation/hpo_radiology_classification.py
+              --num_classes  "24"
+              --save_dir "/tmp/chest-ct-hpo"
+              --model_name "uklfr/gottbert-base"
+              --task "chest_ct"
+              --tmp_modelname  "gottbert"
+              --storage_mode "sqlite"
+              --train_filename "/pvc/radiologie-benchmarks/chest-ct/train.csv"
+              --test_filename "/pvc/radiologie-benchmarks/chest-ct/test.csv"
+              --val_filename "/pvc/radiologie-benchmarks/chest-ct/val.csv"
+              --test "True"
+      nodeSelector:
+        gpu: a100
+      volumes:
+        - name: medbert-pvc
+          persistentVolumeClaim:
+            claimName: medbert-pvc
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never
