@@ -1,5 +1,7 @@
 ![medbert-banner](https://user-images.githubusercontent.com/37253540/225719392-cc72bdba-06d4-4436-83a2-22602bb7ce4f.png)
 
+This is the repository for the paper - **[MEDBERT.de: A Comprehensive German BERT Model for the Medical Domain](https://arxiv.org/abs/2303.08179)**
+
 
 ## Install requirements
 ### From YAML file
@@ -21,6 +23,12 @@ pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp
 ```
 Now you're all set to start working with medbert.
 
+### Using Docker
+We also provide a Docker image with prebuilt dependencies here:
+[medbert.de](https://hub.docker.com/r/pgrundmann/medbert.de)
+
+This image contains all necessary dependencies and scripts to run the pre-training and evaluation of our medbert.de model.
+
 ### From scratch
 You can also install all libraries from scratch using conda, but this might lead to version conflicts. 
 
@@ -36,27 +44,32 @@ pip install transformers datasets tokenizers pytorch-lightning pandas tqdm jsona
 pip install -U "jsonargparse[signatures]"
 ```
 
-## Pretraining Corpora
+## Availability
+Our model is availble on [Huggingface](https://huggingface.co/GerMedBERT).
+We provide two versions of the model, one pre-trained on deduplicated radiology data, the other one on the full dataset. 
+
+## Pretraining
+
+### Data
 
 | Name            |   n_documents |   n_sentences |    n_words |   size_mb |
 |:----------------|--------------:|--------------:|-----------:|----------:|
 | DocCheck        |         63840 |        720404 |   12299257 |     91.95 |
 | GGPONC          |          4369 |         66256 |    1194345 |      9.21 |
 | Webcrawl        |         11322 |        635806 |    9323774 |     64.57 |
-| Pubmed          |         12139 |        108936 |    1983752 |     15.96 |
+| Pubmed          |         12139 |        108936 |    1983752 |     15.96 |    
 | Radiology       |       3657801 |      60839123 |  520717615 |   4195.07 |
 | Spinger OA      |        257999 |      14183396 |  259284884 |   1985.57 |
 | EHR             |        373421 |       4603461 |   69639020 |    439.85 |
-| Doctoral theses |       3422391 |       4665850 |   90380880 |    647.46 |
+| Doctoral theses |       7486    |       4665850 |   90380880 |    647.46 |
 | Thieme          |        330994 |      10445580 |  186200935 |   2898.16 |
 | Wiki            |          3639 |        161714 |    2799787 |     21.52 |
-| WMT22           |         11673 |        114421 |    2121250 |     16.7  |
-| Summary         |       8149588 |      96544947 | 1155945499 |  10386.02 |
+| Summary         |       4723010 |      96544947 | 1155945499 |  10386.02 |
  
 
-## 🪄 Pre-training Hyperparameters
+### 🪄 Hyperparameters
 
-### Phase 1 *Short Sequences*
+#### Phase 1 *Short Sequences*
 
 | **Hyperparameter**              | **Value** |
 |---------------------------------|-----------|
@@ -94,79 +107,17 @@ pip install -U "jsonargparse[signatures]"
 - [gBERT](https://huggingface.co/bert-base-german-cased)
 - [PubMedBERT](https://huggingface.co/microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext)
 - [German medBERT](https://huggingface.co/smanjil/German-MedBERT)
-- [GerNerMedBERT](https://huggingface.co/jfrei/de_GERNERMEDpp_GermanBERT) (für NER Task only)
 - [GottBERT](https://huggingface.co/uklfr/gottbert-base)
+- [Multilingual BERT cased](https://huggingface.co/bert-base-multilingual-cased)
 
-**TODO**
+## Data
+Due to data protection laws and privacy we can not open source most of the evaluation datasets. However in most of the cases you can request access to the data for research purposes.
 
-* Add results
+Please contact the following people to request access to the corresponding datasets:
 
-
-
-### 👓 Knowledge Benchmark
-
-### 1. MC-Questions Charité
-
-### 🇩🇪 Common Language Benchmarks
-
-#### 2. GermEval14
-| **Model**              | **Task** | **F1** |
-|----------------------|-----------|-----------|
-| gBert                 | Validation    |87.38|
-| Gottbert                 | Validation |-|
-| (ours)MedBert                 | Validation  |74.84|
-
-#### 3. GermEval18
-| **Model**              | **Task** | **F1** |
-|----------------------|-----------|-----------|
-| gBert                 | Validation    |0.5257535576820374|
-| Gottbert                 | Validation |-|
-| MedBert                 | Validation  |-|
-### 🏥 Clinical / Biomedical Benchmarks
-
-#### 4. BRONCO150 and BRONCO50 (hidden test-set)
-
-#### 5. N2C2 German
-| **Model**              | **Task** | **Token F1** | **Token Recall** | **Token Precision** | **Token AUC** |
-|------------------------|----------|--------------|------------------|---------------------|---------------|
-
-|----------------------|-----------|-----------|-----------|-----------|-----------|
-| gBert                 | Validation    |0.8349246382713318| - | - | - |
-| Gottbert                 | Validation |0.860611081123352|- | - | - |
-| MedBert                 | Validation  |0.8398441672325134|- | - | - |
-| gBert                 | Test    |0.8304128646850586| 0.8213436603546143| 0.8441508412361145 | 0.959336519241333|
-| Gottbert                 | Test |0.8529325127601624|0.8428363800048828| 0.8674018383026123 | 0.952163815498352|
-| MedBert                 | Test  |**Token F1** |**Token Recall** | **Token Precision** | **Token AUC** |
+- GGPONC - [Florian Borchert](https://hpi.de/lippert/senior-researcher-labs/research-group-in-memory-computing-for-digital-health/florian-borchert.html)
+- GraSCCO - [Florian Borchert](https://hpi.de/lippert/senior-researcher-labs/research-group-in-memory-computing-for-digital-health/florian-borchert.html)
+- Radiology Benchmarks (WristNER, ChestCT Classification, Chest X-Ray Classification) - [Keno Bressem](https://radiologie.charite.de/metas/person/person/address_detail/pd_dr_med_keno_bressem/)
+- OPS and ICD code classification tasks - [Moritz Augustin](https://tiplu.de/moritz-augustin-gf-tiplu/)
 
 
-#### 6. Classification ChestCT
-| **Model**              | **Task** | **AUC** |
-|----------------------|-----------|-----------|
-| German BERT                 | Chest-CT      |93.05|
-| MedBERT                 | Chest-CT      |94.26|
-
-
-#### 7. 🩻 Chest-X-Ray
-| **Model**              | **Task** | **AUC** |
-|----------------------|-----------|-----------|
-| German BERT                 | Chest-XRay     |83.34|
-| MedBERT                 | Chest-XRay      |84.89|
-
-#### 8. Radiology NER Wrist CT
-| **Model**              | **Task** | **F1** |
-|----------------------|-----------|-----------|
-| gBert                 | Validation    |0.5102534890174866|
-| Gottbert                 | Validation |0.5304228067398071|
-| MedBert                 | Validation  | 0.5069772601127625|
-
-
-#### 9. GGPonc
-
-#### 10. WikiDiseases
-
-#### 11. LifeLine Corpus German
-| **Model**              | **Task** | **F1** |
-|----------------------|-----------|-----------|
-| gBert                 | Validation    |0.6418119668960571|
-| Gottbert                 | Validation |0.6163371801376343|
-| MedBert                 | Validation  | 0.5928230285644531|
