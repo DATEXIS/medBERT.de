@@ -1,4 +1,8 @@
-![medbert-banner](https://user-images.githubusercontent.com/37253540/225719392-cc72bdba-06d4-4436-83a2-22602bb7ce4f.png)
+
+<div align="center">
+ <img src="https://github.com/DATEXIS/medBERT.de/assets/37253540/6dfec04d-73a7-403c-9098-c5032719b8e9" width="500">
+ <p></p>
+</div>
 
 This is the repository for the paper - **[MEDBERT.de: A Comprehensive German BERT Model for the Medical Domain](https://arxiv.org/abs/2303.08179)**
 
